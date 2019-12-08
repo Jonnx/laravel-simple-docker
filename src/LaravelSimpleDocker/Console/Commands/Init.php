@@ -42,28 +42,61 @@ class Init extends Command
      */
     public function handle()
     {
-        $this->checkDependencies();
-        $this->getOrg();
-        $this->getRepo();
-        $this->dockerfile();
-        $this->dockerCompose();
-        $this->env();
-        
+        if($this->checkDependencies()) {
+            $this->getOrg();
+            $this->getRepo();
+            $this->dockerfile();
+            $this->dockerCompose();
+            $this->env();
+        }
     }
 
     protected function checkDependencies()
     {
+        $this->comment('Checking dependencies');
 
+        // check docker exists
+        // @todo check version
+        $dockerCommand = shell_exec(sprintf("which %s", escapeshellarg('docker')));
+        $hasDockerCommand = !empty($dockerCommand);
+
+        // check docker-compose exists
+        // @todo check version
+        $dockerComposeCommand = shell_exec(sprintf("which %s", escapeshellarg('docker-compose')));
+        $hasDockerComposeCommand = !empty($dockerComposeCommand);
+
+        $dependenciesMet = $hasDockerCommand && $hasDockerComposeCommand;
+        if(!$dependenciesMet) {
+            $this->warning('Looks like there are some missing dependencies!');
+            if(!$hasDockerCommand) {
+                $this->warning('missing command: docker');
+            }
+            if(!$hasDockerComposeCommand) {
+                $this->warning('missing command: docker-compose');
+            }
+
+            return $this->confirm('Do you want to continue anyways?', false);
+        }
+
+        return true;
     }
 
     protected function getOrg()
     {
-        $this->org = $this->ask('What is your docker repo organization?');
+        $composerConfig = json_decode(file_get_contents(base_path('composer.json')));
+        $name = data_get($composerConfig, 'name');
+        $namePieces = explode('/', $name);
+        $org = $namePieces[0];
+        $this->org = $this->ask('What is your docker repo organization?', $org);
     }
 
     protected function getRepo()
     {
-        $this->repo = $this->ask('What is the project\'s docker repo name?');
+        $composerConfig = json_decode(file_get_contents(base_path('composer.json')));
+        $name = data_get($composerConfig, 'name');
+        $namePieces = explode('/', $name);
+        $repo = $namePieces[1];
+        $this->repo = $this->ask('What is the project\'s docker repo name?', $repo);
     }
 
     protected function dockerfile()
