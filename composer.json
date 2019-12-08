@@ -1,0 +1,13 @@
+{
+    "name": "jonnx/laravel-simple-docker",
+    "description": "a simple docker environment",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jonas Weigert",
+            "email": "weigert.jonas@gmail.com"
+        }
+    ],
+    "require": {}
+}
